@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MedBuddy</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --tg-bg: #ffffff;
+    --tg-text: #1c1c1e;
+    --tg-hint: #8e8e93;
+    --tg-link: #2481cc;
+    --tg-button: #2481cc;
+    --tg-button-text: #ffffff;
+    --tg-secondary-bg: #f2f2f7;
+    --accent: #E8A798;
+    --accent-deep: #C97A69;
+    --card: #ffffff;
+    --border: #e4e4e8;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: var(--tg-secondary-bg);
+    color: var(--tg-text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding-bottom: 90px;
+  }
+
+  header.app-header {
+    padding: 20px 20px 16px;
+    text-align: center;
+  }
+  header.app-header .logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  header.app-header h1 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 2px;
+  }
+  header.app-header p {
+    font-size: 13px;
+    color: var(--tg-hint);
+    margin: 0;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 16px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 6px;
+    border-radius: 12px;
+    border: none;
+    background: var(--card);
+    color: var(--tg-hint);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab-btn.active {
+    background: var(--tg-button);
+    color: var(--tg-button-text);
+  }
+
+  .panel { display: none; padding: 0 16px; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  /* ---- AI chat ---- */
+  #chatLog {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 46vh;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    padding-right: 2px;
+  }
+  .msg {
+    max-width: 82%;
+    padding: 10px 13px;
+    border-radius: 14px;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .msg.bot {
+    background: var(--tg-secondary-bg);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user {
+    background: var(--tg-button);
+    color: var(--tg-button-text);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input-row input {
+    flex: 1;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    font-size: 14.5px;
+    background: var(--tg-secondary-bg);
+    color: var(--tg-text);
+    outline: none;
+  }
+  .chat-input-row button {
+    background: var(--tg-button);
+    color: var(--tg-button-text);
+    border: none;
+    border-radius: 12px;
+    padding: 0 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .chip {
+    font-size: 12px;
+    padding: 6px 11px;
+    border-radius: 100px;
+    background: var(--tg-secondary-bg);
+    color: var(--tg-text);
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+
+  /* ---- Games hub ---- */
+  .stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px 14px;
+  }
+  .stats-bar .points {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--tg-text);
+  }
+  .stats-bar .points-label {
+    font-size: 12px;
+    color: var(--tg-hint);
+  }
+  .level-badge {
+    background: var(--tg-secondary-bg);
+    color: var(--accent-deep);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 100px;
+  }
+  .game-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+  }
+  .game-card .g-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .game-card .g-icon svg { width: 22px; height: 22px; }
+  .game-card .g-info { flex: 1; }
+  .game-card .g-title { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+  .game-card .g-sub { font-size: 12.5px; color: var(--tg-hint); margin: 0; }
+  .game-card .g-best { font-size: 12px; color: var(--accent-deep); font-weight: 600; white-space: nowrap; }
+
+  .game-stage { display: none; }
+  .game-stage.active { display: block; }
+  .game-stage .back-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tg-hint);
+    cursor: pointer;
+  }
+
+  /* Reaction game */
+  .reaction-pad {
+    height: 180px;
+    border-radius: 16px;
+    background: var(--tg-secondary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tg-hint);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-align: center;
+    padding: 20px;
+  }
+  .reaction-pad.go { background: var(--accent); color: #fff; }
+  .reaction-pad.wait2 { background: var(--tg-button); color: #fff; }
+
+  /* Quiz */
+  .quiz-progress { font-size: 12px; color: var(--tg-hint); margin-bottom: 8px; }
+  .quiz-q { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+  .quiz-opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--tg-secondary-bg);
+    color: var(--tg-text);
+    font-size: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .quiz-opt.correct { background: #d7f0dd; border-color: #7bc794; }
+  .quiz-opt.wrong { background: #f7dada; border-color: #e08b8b; }
+
+  /* Memory */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .memory-cell {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    background: var(--tg-secondary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  .memory-cell.flipped, .memory-cell.matched { background: var(--accent); }
+  .memory-meta { font-size: 13px; color: var(--tg-hint); margin-bottom: 10px; }
+
+  .result-box {
+    text-align: center;
+    padding: 10px 0 4px;
+  }
+  .result-box .score { font-size: 30px; font-weight: 700; margin-bottom: 4px; }
+  .result-box .msg { font-size: 13px; color: var(--tg-hint); margin-bottom: 16px; }
+  button.retry {
+    background: var(--tg-button);
+    color: var(--tg-button-text);
+    border: none;
+    border-radius: 100px;
+    padding: 11px 26px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ---- Music ---- */
+  .music-card { text-align: center; }
+  .music-card .note-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .music-card .note-sub { font-size: 13px; color: var(--tg-hint); margin-bottom: 14px; }
+  iframe.spotify-embed {
+    width: 100%;
+    height: 152px;
+    border-radius: 12px;
+    border: none;
+  }
+  .ambient-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px 4px;
+  }
+  .ambient-toggle span { font-size: 14px; }
+  .switch {
+    width: 46px;
+    height: 26px;
+    border-radius: 100px;
+    background: var(--border);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .switch.on { background: var(--tg-button); }
+  .switch .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: left 0.2s ease;
+  }
+  .switch.on .dot { left: 22px; }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px calc(14px + env(safe-area-inset-bottom));
+  }
+  .nav-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 14px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tg-hint);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+  }
+  .nav-btn .ic { display: flex; align-items: center; justify-content: center; }
+  .nav-btn .ic svg { width: 21px; height: 21px; display: block; }
+  .nav-btn span:not(.ic) {
+    max-width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-width 0.2s ease, opacity 0.15s ease;
+  }
+  .nav-btn.active {
+    background: var(--tg-secondary-bg);
+    color: var(--tg-text);
+  }
+  .nav-btn.active span:not(.ic) {
+    max-width: 140px;
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 3v6a4 4 0 0 0 8 0V3"/>
+      <path d="M10 9v3a5 5 0 0 0 10 0v-1"/>
+      <circle cx="20" cy="9" r="1.6"/>
+    </svg>
+  </div>
+  <h1>MedBuddy</h1>
+  <p id="headerSub">Tibbiyot yo'lidagi kichik yordamching</p>
+</header>
+
+<div class="panel active" id="panel-ai">
+  <div class="card">
+    <div id="chatLog"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput">
+      <button id="sendBtn" onclick="sendChat()">Yubor</button>
+    </div>
+    <div class="chip-row" id="chipRow"></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-box">
+  <div class="card">
+    <div class="stats-bar">
+      <div>
+        <div class="points" id="statsPoints">0</div>
+        <div class="points-label" id="statsPointsLabel">ochko</div>
+      </div>
+      <div class="level-badge" id="statsLevel">Boshlang'ich</div>
+    </div>
+  </div>
+
+  <div id="gamesList">
+    <div class="card game-card" onclick="openGame('reaction')">
+      <div class="g-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+      <div class="g-info">
+        <p class="g-title" id="gTitleReaction">Tezkor reaksiya</p>
+        <p class="g-sub" id="gSubReaction">Yashil chiqishi bilan bos</p>
+      </div>
+      <div class="g-best" id="gBestReaction"></div>
+    </div>
+    <div class="card game-card" onclick="openGame('quiz')">
+      <div class="g-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><circle cx="12" cy="17" r="0.5" fill="#fff"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <div class="g-info">
+        <p class="g-title" id="gTitleQuiz">Tibbiy viktorina</p>
+        <p class="g-sub" id="gSubQuiz">5 ta savol, bilimingni sina</p>
+      </div>
+      <div class="g-best" id="gBestQuiz"></div>
+    </div>
+    <div class="card game-card" onclick="openGame('memory')">
+      <div class="g-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+      <div class="g-info">
+        <p class="g-title" id="gTitleMemory">Xotira o'yini</p>
+        <p class="g-sub" id="gSubMemory">Juftliklarni top</p>
+      </div>
+      <div class="g-best" id="gBestMemory"></div>
+    </div>
+  </div>
+
+  <div class="game-stage" id="stage-reaction">
+    <div class="card">
+      <div class="back-row" onclick="closeGame()">&larr; <span id="backLabel1">Orqaga</span></div>
+      <div class="reaction-pad" id="reactionPad" onclick="reactionTap()"></div>
+    </div>
+  </div>
+
+  <div class="game-stage" id="stage-quiz">
+    <div class="card">
+      <div class="back-row" onclick="closeGame()">&larr; <span id="backLabel2">Orqaga</span></div>
+      <div class="quiz-progress" id="quizProgress"></div>
+      <div class="quiz-q" id="quizQ"></div>
+      <div id="quizOpts"></div>
+    </div>
+  </div>
+
+  <div class="game-stage" id="stage-memory">
+    <div class="card">
+      <div class="back-row" onclick="closeGame()">&larr; <span id="backLabel3">Orqaga</span></div>
+      <div class="memory-meta" id="memoryMeta"></div>
+      <div class="memory-grid" id="memoryGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-music">
+  <div class="card music-card">
+    <div class="note-title" id="musicTitle">O'qish uchun musiqa</div>
+    <div class="note-sub" id="musicSub">Diqqatni jamlash uchun sokin lo-fi to'plam</div>
+    <iframe class="spotify-embed" src="https://open.spotify.com/embed/playlist/37i9dQZF1DWWQRwui0ExPn?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+    <div class="ambient-toggle">
+      <span id="ambientLabel">Sokin fon shovqini</span>
+      <div class="switch" id="ambientSwitch" onclick="toggleAmbient()"><div class="dot"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <div class="nav-pill">
+    <button class="nav-btn active" id="nav-ai" onclick="showPanel('ai')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+      <span id="navAiLabel">AI yordamchi</span>
+    </button>
+    <button class="nav-btn" id="nav-box" onclick="showPanel('box')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="12" rx="4"/><path d="M8 11v4M6 13h4"/><circle cx="16" cy="11.5" r="1"/><circle cx="18.5" cy="14" r="1"/></svg></span>
+      <span id="navBoxLabel">O'yinlar</span>
+    </button>
+    <button class="nav-btn" id="nav-music" onclick="showPanel('music')">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+      <span id="navMusicLabel">Musiqa</span>
+    </button>
+  </div>
+</div>
+
+<script>
+let LANG = 'uz';
+(function detectLang() {
+  const params = new URLSearchParams(window.location.search);
+  let fromUrl = params.get('lang');
+  let fromStartParam = null;
+  if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    const tp = tg.themeParams || {};
+    const root = document.documentElement.style;
+    if (tp.bg_color) root.setProperty('--tg-bg', tp.bg_color);
+    if (tp.text_color) root.setProperty('--tg-text', tp.text_color);
+    if (tp.hint_color) root.setProperty('--tg-hint', tp.hint_color);
+    if (tp.button_color) root.setProperty('--tg-button', tp.button_color);
+    if (tp.button_text_color) root.setProperty('--tg-button-text', tp.button_text_color);
+    if (tp.secondary_bg_color) root.setProperty('--tg-secondary-bg', tp.secondary_bg_color);
+    document.body.style.background = 'var(--tg-secondary-bg)';
+    if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+      fromStartParam = tg.initDataUnsafe.start_param;
+    }
+  }
+  const candidate = fromUrl || fromStartParam;
+  if (candidate && ['uz', 'ru', 'en'].includes(candidate)) LANG = candidate;
+})();
+
+const T = {
+  uz: {
+    headerSub: "Tibbiyot yo'lidagi kichik yordamching",
+    navAi: "AI yordamchi", navBox: "Sirli quti", navMusic: "Musiqa",
+    inputPh: "Savolingizni yozing...", send: "Yubor",
+    chips: ["Homeostaz nima?", "Imtihonga tayyorgarlik", "Charchadim"],
+    boxHint: "Bugungi qutingizni oching", boxSubHint: "Kuniga bir marta ochiladi",
+    streak: "Ochilgan qutilar: ",
+    musicTitle: "O'qish uchun musiqa", musicSub: "Diqqatni jamlash uchun sokin lo-fi to'plam",
+    ambient: "Sokin fon shovqini",
+    hello: "Salom! Men MedBuddy — o'qishingda yonimda bo'laman. Savol ber yoki pastdagi tugmalardan birini tanla.",
+    kb: [
+      { keys: ['homeostaz'], reply: "Homeostaz — organizmning ichki muhitini barqaror saqlash qobiliyati (harorat, pH, glyukoza darajasi kabi)." },
+      { keys: ['imtihon', 'tayyor'], reply: "Imtihonga tayyorgarlik: 1) mavzuni bo'laklarga bo'l, 2) flashcard ishlat, 3) o'qiganingni birovga tushuntir, 4) uxlashni unutma." },
+      { keys: ['charcha', 'stress', 'qiyin'], reply: "Charchash normal. Bir necha daqiqa dam ol, chuqur nafas ol — har bir qiyin kun seni kuchliroq qiladi." },
+      { keys: ['salom', 'assalom'], reply: "Salom! Nimani bilmoqchisan?" },
+      { keys: ['rahmat'], reply: "Arzimaydi! Yana savol bo'lsa, shu yerdaman." },
+    ],
+    fallback: "Bu haqida hozircha aniq javobim yo'q. Darslikdan yoki o'qituvchingdan so'rab ko'r!",
+    pointsLabel: "ochko", back: "Orqaga",
+    levels: [[0,"Boshlang'ich"],[50,"O'rta"],[150,"Yuqori"],[300,"Usta shifokor"]],
+    gReaction: "Tezkor reaksiya", gReactionSub: "Yashil chiqishi bilan bos",
+    gQuiz: "Tibbiy viktorina", gQuizSub: "5 ta savol, bilimingni sina",
+    gMemory: "Xotira o'yini", gMemorySub: "Juftliklarni top",
+    reactionWait: "Tayyor bo'l...", reactionNow: "HOZIR BOS!", reactionEarly: "Erta bosding! Yana urin",
+    reactionResult: (ms) => `Reaksiyang: ${ms} ms`,
+    quizCorrect: "To'g'ri!", quizWrong: "Noto'g'ri",
+    quizDone: (score) => `Natija: ${score} / 50 ochko`,
+    memoryMeta: (moves) => `Harakatlar: ${moves}`,
+    memoryDone: (moves, score) => `${moves} harakatda tugatding — ${score} ochko`,
+    retry: "Yana o'ynash",
+    quiz: [
+      { q: "Odam tanasida nechta suyak bor?", opts: ["150", "206", "300", "180"], correct: 1 },
+      { q: "Yurakning nechta kamerasi bor?", opts: ["2", "3", "4", "5"], correct: 2 },
+      { q: "Insulinni qaysi organ ishlab chiqaradi?", opts: ["Jigar", "Me'da osti bezi", "Buyrak", "Taloq"], correct: 1 },
+      { q: "DNK hujayraning qaysi qismida joylashgan?", opts: ["Sitoplazma", "Mitoxondriya", "Yadro", "Ribosoma"], correct: 2 },
+      { q: "Qon plazmasining necha foizi suvdan iborat?", opts: ["50%", "70%", "90%", "30%"], correct: 2 },
+    ],
+  },
+  ru: {
+    headerSub: "Твой помощник на пути к медицине",
+    navAi: "ИИ помощник", navBox: "Игры", navMusic: "Музыка",
+    inputPh: "Напишите вопрос...", send: "Отправить",
+    chips: ["Что такое гомеостаз?", "Подготовка к экзамену", "Устал(а)"],
+    musicTitle: "Музыка для учёбы", musicSub: "Спокойная подборка лоу-фай для концентрации",
+    ambient: "Тихий фоновый звук",
+    hello: "Привет! Я MedBuddy — буду рядом в учёбе. Задай вопрос или выбери кнопку ниже.",
+    kb: [
+      { keys: ['гомеостаз'], reply: "Гомеостаз — способность организма поддерживать стабильную внутреннюю среду (температура, pH, глюкоза)." },
+      { keys: ['экзамен', 'подготов'], reply: "Подготовка к экзамену: 1) разбей тему на части, 2) используй карточки, 3) объясни материал кому-то, 4) не забывай спать." },
+      { keys: ['устал', 'стресс', 'тяжело'], reply: "Усталость — это нормально. Сделай паузу, подыши глубже — каждый трудный день делает тебя сильнее." },
+      { keys: ['привет'], reply: "Привет! Что хочешь узнать?" },
+      { keys: ['спасибо'], reply: "Пожалуйста! Если будут вопросы — я здесь." },
+    ],
+    fallback: "Пока не знаю точного ответа. Загляни в учебник или спроси преподавателя!",
+    pointsLabel: "очков", back: "Назад",
+    levels: [[0,"Новичок"],[50,"Средний"],[150,"Продвинутый"],[300,"Мастер"]],
+    gReaction: "Быстрая реакция", gReactionSub: "Нажми, когда станет зелёным",
+    gQuiz: "Медицинская викторина", gQuizSub: "5 вопросов, проверь знания",
+    gMemory: "Игра на память", gMemorySub: "Найди пары",
+    reactionWait: "Приготовься...", reactionNow: "ЖМИ СЕЙЧАС!", reactionEarly: "Рано нажал! Попробуй снова",
+    reactionResult: (ms) => `Твоя реакция: ${ms} мс`,
+    quizCorrect: "Верно!", quizWrong: "Неверно",
+    quizDone: (score) => `Результат: ${score} / 50 очков`,
+    memoryMeta: (moves) => `Ходы: ${moves}`,
+    memoryDone: (moves, score) => `Завершено за ${moves} ходов — ${score} очков`,
+    retry: "Играть снова",
+    quiz: [
+      { q: "Сколько костей у взрослого человека?", opts: ["150", "206", "300", "180"], correct: 1 },
+      { q: "Сколько камер в сердце?", opts: ["2", "3", "4", "5"], correct: 2 },
+      { q: "Какой орган вырабатывает инсулин?", opts: ["Печень", "Поджелудочная железа", "Почка", "Селезёнка"], correct: 1 },
+      { q: "Где находится ДНК в клетке?", opts: ["Цитоплазма", "Митохондрия", "Ядро", "Рибосома"], correct: 2 },
+      { q: "Сколько процентов плазмы крови составляет вода?", opts: ["50%", "70%", "90%", "30%"], correct: 2 },
+    ],
+  },
+  en: {
+    headerSub: "Your little companion on the path to medicine",
+    navAi: "AI helper", navBox: "Games", navMusic: "Music",
+    inputPh: "Type your question...", send: "Send",
+    chips: ["What is homeostasis?", "Exam prep tips", "I'm tired"],
+    musicTitle: "Study music", musicSub: "A calm lo-fi mix to help you focus",
+    ambient: "Soft background sound",
+    hello: "Hi! I'm MedBuddy, here to help with your studies. Ask a question or pick a button below.",
+    kb: [
+      { keys: ['homeostasis'], reply: "Homeostasis is the body's ability to keep its internal environment stable (temperature, pH, glucose, etc.)." },
+      { keys: ['exam', 'prepar'], reply: "Exam prep: 1) break the topic into parts, 2) use flashcards, 3) explain it out loud to someone, 4) don't skip sleep." },
+      { keys: ['tired', 'stress', 'hard'], reply: "Feeling tired is normal. Take a short break, breathe deeply — every hard day makes you stronger." },
+      { keys: ['hi', 'hello'], reply: "Hi! What would you like to know?" },
+      { keys: ['thank'], reply: "You're welcome! I'm here whenever you need me." },
+    ],
+    fallback: "I don't have a clear answer for that yet. Check your textbook or ask your instructor!",
+    pointsLabel: "points", back: "Back",
+    levels: [[0,"Beginner"],[50,"Intermediate"],[150,"Advanced"],[300,"Master"]],
+    gReaction: "Quick reaction", gReactionSub: "Tap when it turns green",
+    gQuiz: "Medical quiz", gQuizSub: "5 questions to test your knowledge",
+    gMemory: "Memory game", gMemorySub: "Find the matching pairs",
+    reactionWait: "Get ready...", reactionNow: "TAP NOW!", reactionEarly: "Too early! Try again",
+    reactionResult: (ms) => `Your reaction: ${ms} ms`,
+    quizCorrect: "Correct!", quizWrong: "Wrong",
+    quizDone: (score) => `Score: ${score} / 50 points`,
+    memoryMeta: (moves) => `Moves: ${moves}`,
+    memoryDone: (moves, score) => `Finished in ${moves} moves — ${score} points`,
+    retry: "Play again",
+    quiz: [
+      { q: "How many bones does an adult human have?", opts: ["150", "206", "300", "180"], correct: 1 },
+      { q: "How many chambers does the heart have?", opts: ["2", "3", "4", "5"], correct: 2 },
+      { q: "Which organ produces insulin?", opts: ["Liver", "Pancreas", "Kidney", "Spleen"], correct: 1 },
+      { q: "Where is DNA located in a cell?", opts: ["Cytoplasm", "Mitochondria", "Nucleus", "Ribosome"], correct: 2 },
+      { q: "What percentage of blood plasma is water?", opts: ["50%", "70%", "90%", "30%"], correct: 2 },
+    ],
+  },
+};
+
+function applyLang() {
+  const t = T[LANG];
+  document.getElementById('headerSub').textContent = t.headerSub;
+  document.getElementById('navAiLabel').textContent = t.navAi;
+  document.getElementById('navBoxLabel').textContent = t.navBox;
+  document.getElementById('navMusicLabel').textContent = t.navMusic;
+  document.getElementById('chatInput').placeholder = t.inputPh;
+  document.getElementById('sendBtn').textContent = t.send;
+  document.getElementById('musicTitle').textContent = t.musicTitle;
+  document.getElementById('musicSub').textContent = t.musicSub;
+  document.getElementById('ambientLabel').textContent = t.ambient;
+  document.getElementById('statsPointsLabel').textContent = t.pointsLabel;
+  document.getElementById('gTitleReaction').textContent = t.gReaction;
+  document.getElementById('gSubReaction').textContent = t.gReactionSub;
+  document.getElementById('gTitleQuiz').textContent = t.gQuiz;
+  document.getElementById('gSubQuiz').textContent = t.gQuizSub;
+  document.getElementById('gTitleMemory').textContent = t.gMemory;
+  document.getElementById('gSubMemory').textContent = t.gMemorySub;
+  document.getElementById('backLabel1').textContent = t.back;
+  document.getElementById('backLabel2').textContent = t.back;
+  document.getElementById('backLabel3').textContent = t.back;
+  const chipRow = document.getElementById('chipRow');
+  chipRow.innerHTML = '';
+  t.chips.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'chip';
+    div.textContent = c;
+    div.onclick = () => quickAsk(c);
+    chipRow.appendChild(div);
+  });
+  renderStatsBar();
+}
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+}
+
+// ---------- AI chat (rule-based demo assistant) ----------
+function botReply(text) {
+  const lower = text.toLowerCase();
+  const t = T[LANG];
+  for (const item of t.kb) {
+    if (item.keys.some(k => lower.includes(k))) return item.reply;
+  }
+  return t.fallback;
+}
+
+function addMsg(text, who) {
+  const log = document.getElementById('chatLog');
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const val = input.value.trim();
+  if (!val) return;
+  addMsg(val, 'user');
+  input.value = '';
+  setTimeout(() => addMsg(botReply(val), 'bot'), 350);
+}
+
+function quickAsk(text) {
+  addMsg(text, 'user');
+  setTimeout(() => addMsg(botReply(text), 'bot'), 350);
+}
+
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChat();
+});
+
+applyLang();
+addMsg(T[LANG].hello, 'bot');
+
+// ---------- Persistent stats (Telegram CloudStorage, with localStorage fallback) ----------
+const STATS_KEY = 'medbuddy_stats_v1';
+let stats = { total: 0, best: { reaction: null, quiz: 0, memory: null } };
+let tgObj = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+let cloudOk = !!(tgObj && tgObj.CloudStorage);
+
+function loadStats(cb) {
+  if (cloudOk) {
+    tgObj.CloudStorage.getItem(STATS_KEY, (err, val) => {
+      if (!err && val) { try { stats = JSON.parse(val); } catch (e) {} }
+      cb();
+    });
+  } else {
+    try {
+      const v = localStorage.getItem(STATS_KEY);
+      if (v) stats = JSON.parse(v);
+    } catch (e) {}
+    cb();
+  }
+}
+
+function saveStats() {
+  const json = JSON.stringify(stats);
+  if (cloudOk) tgObj.CloudStorage.setItem(STATS_KEY, json);
+  else { try { localStorage.setItem(STATS_KEY, json); } catch (e) {} }
+}
+
+function levelFor(points) {
+  const levels = T[LANG].levels;
+  let name = levels[0][1];
+  for (const [threshold, label] of levels) {
+    if (points >= threshold) name = label;
+  }
+  return name;
+}
+
+function renderStatsBar() {
+  document.getElementById('statsPoints').textContent = stats.total;
+  document.getElementById('statsLevel').textContent = levelFor(stats.total);
+  const rSpan = document.getElementById('gBestReaction');
+  rSpan.textContent = stats.best.reaction != null ? stats.best.reaction + ' ms' : '';
+  const qSpan = document.getElementById('gBestQuiz');
+  qSpan.textContent = stats.best.quiz > 0 ? stats.best.quiz + '/50' : '';
+  const mSpan = document.getElementById('gBestMemory');
+  mSpan.textContent = stats.best.memory != null ? stats.best.memory + ' ' + (LANG === 'uz' ? 'harakat' : LANG === 'ru' ? 'ходов' : 'moves') : '';
+}
+
+function addPoints(n) {
+  stats.total += n;
+  saveStats();
+  renderStatsBar();
+}
+
+function openGame(name) {
+  document.getElementById('gamesList').style.display = 'none';
+  document.querySelectorAll('.game-stage').forEach(s => s.classList.remove('active'));
+  document.getElementById('stage-' + name).classList.add('active');
+  if (name === 'reaction') startReaction();
+  if (name === 'quiz') startQuiz();
+  if (name === 'memory') startMemory();
+}
+
+function closeGame() {
+  document.querySelectorAll('.game-stage').forEach(s => s.classList.remove('active'));
+  document.getElementById('gamesList').style.display = 'block';
+  clearTimeout(reactionTimer);
+}
+
+// ---------- Reaction game ----------
+let reactionTimer = null;
+let reactionState = 'idle';
+let reactionStartTime = 0;
+
+function startReaction() {
+  const pad = document.getElementById('reactionPad');
+  pad.className = 'reaction-pad wait2';
+  pad.textContent = T[LANG].reactionWait;
+  reactionState = 'waiting';
+  const delay = 1200 + Math.random() * 2000;
+  reactionTimer = setTimeout(() => {
+    pad.className = 'reaction-pad go';
+    pad.textContent = T[LANG].reactionNow;
+    reactionState = 'go';
+    reactionStartTime = Date.now();
+  }, delay);
+}
+
+function reactionTap() {
+  const pad = document.getElementById('reactionPad');
+  if (reactionState === 'waiting') {
+    clearTimeout(reactionTimer);
+    pad.className = 'reaction-pad';
+    pad.textContent = T[LANG].reactionEarly;
+    reactionState = 'idle';
+    setTimeout(startReaction, 1200);
+    return;
+  }
+  if (reactionState === 'go') {
+    const ms = Date.now() - reactionStartTime;
+    reactionState = 'idle';
+    const points = Math.max(5, Math.round(50 - ms / 20));
+    if (stats.best.reaction == null || ms < stats.best.reaction) stats.best.reaction = ms;
+    addPoints(points);
+    pad.className = 'reaction-pad';
+    pad.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'result-box';
+    wrap.innerHTML = `<div class="score">+${points}</div><div class="msg">${T[LANG].reactionResult(ms)}</div>`;
+    const btn = document.createElement('button');
+    btn.className = 'retry';
+    btn.textContent = T[LANG].retry;
+    btn.onclick = (e) => { e.stopPropagation(); startReaction(); };
+    wrap.appendChild(btn);
+    pad.appendChild(wrap);
+  }
+}
+
+// ---------- Quiz game ----------
+let quizIndex = 0;
+let quizScore = 0;
+
+function startQuiz() {
+  quizIndex = 0;
+  quizScore = 0;
+  renderQuizQ();
+}
+
+function renderQuizQ() {
+  const list = T[LANG].quiz;
+  const progEl = document.getElementById('quizProgress');
+  if (quizIndex >= list.length) {
+    if (quizScore > stats.best.quiz) stats.best.quiz = quizScore;
+    addPoints(quizScore);
+    progEl.textContent = '';
+    document.getElementById('quizQ').textContent = '';
+    const optsEl = document.getElementById('quizOpts');
+    optsEl.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'result-box';
+    wrap.innerHTML = `<div class="score">${quizScore}</div><div class="msg">${T[LANG].quizDone(quizScore)}</div>`;
+    const btn = document.createElement('button');
+    btn.className = 'retry';
+    btn.textContent = T[LANG].retry;
+    btn.onclick = startQuiz;
+    wrap.appendChild(btn);
+    optsEl.appendChild(wrap);
+    return;
+  }
+  const q = list[quizIndex];
+  progEl.textContent = (quizIndex + 1) + ' / ' + list.length;
+  document.getElementById('quizQ').textContent = q.q;
+  const optsEl = document.getElementById('quizOpts');
+  optsEl.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-opt';
+    btn.textContent = opt;
+    btn.onclick = () => answerQuiz(i, btn);
+    optsEl.appendChild(btn);
+  });
+}
+
+function answerQuiz(i, btnEl) {
+  const q = T[LANG].quiz[quizIndex];
+  document.querySelectorAll('.quiz-opt').forEach(b => b.onclick = null);
+  if (i === q.correct) {
+    btnEl.classList.add('correct');
+    quizScore += 10;
+  } else {
+    btnEl.classList.add('wrong');
+    document.querySelectorAll('.quiz-opt')[q.correct].classList.add('correct');
+  }
+  setTimeout(() => { quizIndex++; renderQuizQ(); }, 700);
+}
+
+// ---------- Memory game ----------
+const memoryEmojis = ['\u2764\ufe0f', '\ud83e\ude7a', '\ud83e\uddb4', '\ud83d\udc8a', '\ud83e\ude79', '\ud83e\udda0'];
+let memoryCards = [];
+let memoryFlipped = [];
+let memoryMoves = 0;
+let memoryMatched = 0;
+let memoryLock = false;
+
+function startMemory() {
+  memoryMoves = 0;
+  memoryMatched = 0;
+  memoryFlipped = [];
+  memoryLock = false;
+  memoryCards = [...memoryEmojis, ...memoryEmojis]
+    .map(e => ({ emoji: e, flipped: false, matched: false }))
+    .sort(() => Math.random() - 0.5);
+  renderMemory();
+}
+
+function renderMemory() {
+  document.getElementById('memoryMeta').textContent = T[LANG].memoryMeta(memoryMoves);
+  const grid = document.getElementById('memoryGrid');
+  grid.innerHTML = '';
+  memoryCards.forEach((card, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'memory-cell' + (card.flipped || card.matched ? ' flipped' : '');
+    if (card.flipped || card.matched) cell.textContent = card.emoji;
+    cell.onclick = () => flipMemory(idx);
+    grid.appendChild(cell);
+  });
+}
+
+function flipMemory(idx) {
+  if (memoryLock) return;
+  const card = memoryCards[idx];
+  if (card.flipped || card.matched) return;
+  card.flipped = true;
+  memoryFlipped.push(idx);
+  renderMemory();
+  if (memoryFlipped.length === 2) {
+    memoryMoves++;
+    memoryLock = true;
+    const [a, b] = memoryFlipped;
+    if (memoryCards[a].emoji === memoryCards[b].emoji) {
+      memoryCards[a].matched = true;
+      memoryCards[b].matched = true;
+      memoryMatched++;
+      memoryFlipped = [];
+      memoryLock = false;
+      renderMemory();
+      if (memoryMatched === memoryEmojis.length) finishMemory();
+    } else {
+      setTimeout(() => {
+        memoryCards[a].flipped = false;
+        memoryCards[b].flipped = false;
+        memoryFlipped = [];
+        memoryLock = false;
+        renderMemory();
+      }, 700);
+    }
+  }
+}
+
+function finishMemory() {
+  const points = Math.max(10, 150 - memoryMoves * 5);
+  if (stats.best.memory == null || memoryMoves < stats.best.memory) stats.best.memory = memoryMoves;
+  addPoints(points);
+  const grid = document.getElementById('memoryGrid');
+  grid.parentElement.querySelector('.memory-meta').textContent = '';
+  grid.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'result-box';
+  wrap.innerHTML = `<div class="score">+${points}</div><div class="msg">${T[LANG].memoryDone(memoryMoves, points)}</div>`;
+  const btn = document.createElement('button');
+  btn.className = 'retry';
+  btn.textContent = T[LANG].retry;
+  btn.onclick = startMemory;
+  wrap.appendChild(btn);
+  grid.appendChild(wrap);
+}
+
+loadStats(renderStatsBar);
+
+// ---------- Ambient sound (generated, no copyrighted audio) ----------
+let audioCtx = null;
+let ambientNodes = [];
+let ambientOn = false;
+
+function toggleAmbient() {
+  ambientOn = !ambientOn;
+  const sw = document.getElementById('ambientSwitch');
+  sw.classList.toggle('on', ambientOn);
+  if (ambientOn) startAmbient(); else stopAmbient();
+}
+
+function startAmbient() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0.02;
+  gain.connect(audioCtx.destination);
+  [220, 330, 440].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const g = audioCtx.createGain();
+    g.gain.value = 0.015 - i * 0.003;
+    osc.connect(g);
+    g.connect(gain);
+    osc.start();
+    ambientNodes.push(osc);
+  });
+}
+
+function stopAmbient() {
+  ambientNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+  ambientNodes = [];
+}
+</script>
+
+</body>
+</html>
